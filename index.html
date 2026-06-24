@@ -8,8 +8,8 @@
 <title>Notion Todo</title>
 
 <style>
-* {
-  box-sizing: border-box;
+*{
+  box-sizing:border-box;
 }
 
 :root{
@@ -17,15 +17,29 @@
   --hover:rgba(200,224,244,.08);
 }
 
+html,
 body{
   margin:0;
-  padding:8px;
+  padding:0;
+  overflow:hidden;
+  scrollbar-width:none;
   background:transparent;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+::-webkit-scrollbar{
+  display:none;
+}
+
+body{
+  padding:8px;
+  min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,
+  "Segoe UI",sans-serif;
 }
 
 .todo-app{
   width:100%;
+  min-height:600px;
 }
 
 .todo-item{
@@ -81,7 +95,8 @@ body{
 const STORAGE_KEY = "notionTodoList";
 const RESET_KEY = "notionTodoLastReset";
 
-let todos = JSON.parse(
+let todos =
+JSON.parse(
   localStorage.getItem(STORAGE_KEY)
 ) || [
   {
@@ -116,8 +131,11 @@ function getResetDate(){
 function resetCheckboxesIfNeeded(){
 
   const current = getResetDate();
+
   const last =
-    localStorage.getItem(RESET_KEY);
+  localStorage.getItem(
+    RESET_KEY
+  );
 
   if(current !== last){
 
@@ -138,39 +156,55 @@ function sortTodos(){
 
   todos.sort((a,b)=>{
     return Number(a.checked)
-      - Number(b.checked);
+    - Number(b.checked);
   });
 
 }
 
-function render(focusIndex=null){
+function render(
+  focusIndex = null
+){
 
   const list =
-    document.getElementById("todoList");
+  document.getElementById(
+    "todoList"
+  );
 
   list.innerHTML = "";
 
-  todos.forEach((todo,index)=>{
+  todos.forEach(
+    (todo,index)=>{
 
     const item =
-      document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
     item.className =
       "todo-item" +
-      (todo.checked ? " completed" : "");
+      (
+        todo.checked
+        ? " completed"
+        : ""
+      );
 
     const checkbox =
-      document.createElement("input");
+    document.createElement(
+      "input"
+    );
 
-    checkbox.type = "checkbox";
-    checkbox.checked = todo.checked;
+    checkbox.type =
+    "checkbox";
+
+    checkbox.checked =
+    todo.checked;
 
     checkbox.addEventListener(
       "change",
       ()=>{
 
         todo.checked =
-          checkbox.checked;
+        checkbox.checked;
 
         sortTodos();
         saveTodos();
@@ -180,17 +214,24 @@ function render(focusIndex=null){
     );
 
     const text =
-      document.createElement("input");
+    document.createElement(
+      "input"
+    );
 
     text.type = "text";
-    text.value = todo.text;
-    text.placeholder = "タスクを入力";
+
+    text.value =
+    todo.text;
+
+    text.placeholder =
+    "タスクを入力";
 
     text.addEventListener(
       "input",
       ()=>{
 
-        todo.text = text.value;
+        todo.text =
+        text.value;
 
         saveTodos();
 
@@ -201,7 +242,9 @@ function render(focusIndex=null){
       "keydown",
       (e)=>{
 
-        if(e.key === "Enter"){
+        if(
+          e.key === "Enter"
+        ){
 
           e.preventDefault();
 
@@ -215,46 +258,71 @@ function render(focusIndex=null){
           );
 
           saveTodos();
-          render(index + 1);
+
+          render(
+            index + 1
+          );
         }
 
         if(
-          e.key === "Backspace" &&
-          text.value.trim() === "" &&
+          e.key ===
+          "Backspace" &&
+          text.value.trim()
+          === "" &&
           todos.length > 1
         ){
 
           e.preventDefault();
 
           const focus =
-            Math.max(index - 1, 0);
+          Math.max(
+            index - 1,
+            0
+          );
 
-          todos.splice(index,1);
+          todos.splice(
+            index,
+            1
+          );
 
           saveTodos();
-          render(focus);
+
+          render(
+            focus
+          );
         }
 
       }
     );
 
-    item.appendChild(checkbox);
-    item.appendChild(text);
+    item.appendChild(
+      checkbox
+    );
 
-    list.appendChild(item);
+    item.appendChild(
+      text
+    );
+
+    list.appendChild(
+      item
+    );
 
   });
 
-  if(focusIndex !== null){
+  if(
+    focusIndex !== null
+  ){
 
     setTimeout(()=>{
 
       const inputs =
-        document.querySelectorAll(
-          '.todo-item input[type="text"]'
-        );
+      document.querySelectorAll(
+        '.todo-item input[type="text"]'
+      );
 
-      inputs[focusIndex]?.focus();
+      inputs[
+        focusIndex
+      ]?.focus();
 
     },0);
 
