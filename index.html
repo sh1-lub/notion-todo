@@ -13,12 +13,14 @@
 }
 
 :root{
-  --text:#C8E0F4;
-  --hover:rgba(200,224,244,.08);
+  --text:#7699c5;
+  --hover:rgba(118,153,197,.10);
 }
 
 html,
 body{
+  width:100%;
+  max-width:100%;
   margin:0;
   padding:0;
   overflow:hidden;
@@ -27,6 +29,8 @@ body{
 }
 
 ::-webkit-scrollbar{
+  width:0;
+  height:0;
   display:none;
 }
 
@@ -39,7 +43,9 @@ body{
 
 .todo-app{
   width:100%;
+  max-width:100%;
   min-height:600px;
+  overflow:hidden;
 }
 
 .todo-item{
@@ -64,12 +70,17 @@ body{
 
 .todo-item input[type="text"]{
   flex:1;
+  min-width:0;
+  width:100%;
   border:none;
   outline:none;
   background:transparent;
   color:var(--text);
   font-size:16px;
   line-height:1.5;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .todo-item input[type="text"]::placeholder{
@@ -156,7 +167,7 @@ function sortTodos(){
 
   todos.sort((a,b)=>{
     return Number(a.checked)
-    - Number(b.checked);
+      - Number(b.checked);
   });
 
 }
@@ -175,12 +186,12 @@ function render(
   todos.forEach(
     (todo,index)=>{
 
-    const item =
-    document.createElement(
-      "div"
-    );
+      const item =
+      document.createElement(
+        "div"
+      );
 
-    item.className =
+      item.className =
       "todo-item" +
       (
         todo.checked
@@ -188,126 +199,125 @@ function render(
         : ""
       );
 
-    const checkbox =
-    document.createElement(
-      "input"
-    );
+      const checkbox =
+      document.createElement(
+        "input"
+      );
 
-    checkbox.type =
-    "checkbox";
+      checkbox.type =
+      "checkbox";
 
-    checkbox.checked =
-    todo.checked;
+      checkbox.checked =
+      todo.checked;
 
-    checkbox.addEventListener(
-      "change",
-      ()=>{
+      checkbox.addEventListener(
+        "change",
+        ()=>{
 
-        todo.checked =
-        checkbox.checked;
+          todo.checked =
+          checkbox.checked;
 
-        sortTodos();
-        saveTodos();
-        render();
+          sortTodos();
+          saveTodos();
+          render();
 
-      }
-    );
+        }
+      );
 
-    const text =
-    document.createElement(
-      "input"
-    );
+      const text =
+      document.createElement(
+        "input"
+      );
 
-    text.type = "text";
+      text.type = "text";
 
-    text.value =
-    todo.text;
+      text.value =
+      todo.text;
 
-    text.placeholder =
-    "タスクを入力";
+      text.placeholder =
+      "タスクを入力";
 
-    text.addEventListener(
-      "input",
-      ()=>{
+      text.addEventListener(
+        "input",
+        ()=>{
 
-        todo.text =
-        text.value;
-
-        saveTodos();
-
-      }
-    );
-
-    text.addEventListener(
-      "keydown",
-      (e)=>{
-
-        if(
-          e.key === "Enter"
-        ){
-
-          e.preventDefault();
-
-          todos.splice(
-            index + 1,
-            0,
-            {
-              text:"",
-              checked:false
-            }
-          );
+          todo.text =
+          text.value;
 
           saveTodos();
 
-          render(
-            index + 1
-          );
         }
+      );
 
-        if(
-          e.key ===
-          "Backspace" &&
-          text.value.trim()
-          === "" &&
-          todos.length > 1
-        ){
+      text.addEventListener(
+        "keydown",
+        (e)=>{
 
-          e.preventDefault();
+          if(
+            e.key === "Enter"
+          ){
 
-          const focus =
-          Math.max(
-            index - 1,
-            0
-          );
+            e.preventDefault();
 
-          todos.splice(
-            index,
-            1
-          );
+            todos.splice(
+              index + 1,
+              0,
+              {
+                text:"",
+                checked:false
+              }
+            );
 
-          saveTodos();
+            saveTodos();
 
-          render(
-            focus
-          );
+            render(
+              index + 1
+            );
+          }
+
+          if(
+            e.key === "Backspace" &&
+            text.value.trim() === "" &&
+            todos.length > 1
+          ){
+
+            e.preventDefault();
+
+            const focus =
+            Math.max(
+              index - 1,
+              0
+            );
+
+            todos.splice(
+              index,
+              1
+            );
+
+            saveTodos();
+
+            render(
+              focus
+            );
+          }
+
         }
+      );
 
-      }
-    );
+      item.appendChild(
+        checkbox
+      );
 
-    item.appendChild(
-      checkbox
-    );
+      item.appendChild(
+        text
+      );
 
-    item.appendChild(
-      text
-    );
+      list.appendChild(
+        item
+      );
 
-    list.appendChild(
-      item
-    );
-
-  });
+    }
+  );
 
   if(
     focusIndex !== null
