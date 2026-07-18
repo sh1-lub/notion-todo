@@ -1,347 +1,81 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Notion Todo</title>
-
 <style>
-*{
-  box-sizing:border-box;
-}
-
-:root{
-  --text:#668cbb;
-  --hover:rgba(118,153,197,.10);
-}
-
-html,
-body{
-  width:100%;
-  max-width:100%;
-  margin:0;
-  padding:0;
-  overflow:hidden;
-  scrollbar-width:none;
-  background:transparent;
-}
-
-::-webkit-scrollbar{
-  width:0;
-  height:0;
-  display:none;
-}
-
-body{
-  padding:8px;
-  min-height:100vh;
-  font-family:-apple-system,BlinkMacSystemFont,
-  "Segoe UI",sans-serif;
-}
-
-.todo-app{
-  width:100%;
-  max-width:100%;
-  min-height:600px;
-  overflow:hidden;
-}
-
-.todo-item{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:6px 8px;
-  border-radius:8px;
-  transition:background .2s ease;
-}
-
-.todo-item:hover{
-  background:var(--hover);
-}
-
-.todo-item input[type="checkbox"]{
-  width:18px;
-  height:18px;
-  cursor:pointer;
-  flex-shrink:0;
-}
-
-.todo-item input[type="text"]{
-  flex:1;
-  min-width:0;
-  width:100%;
-  border:none;
-  outline:none;
-  background:transparent;
-  color:var(--text);
-  font-size:16px;
-  line-height:1.5;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.todo-item input[type="text"]::placeholder{
-  color:var(--text);
-  opacity:.45;
-}
-
-.todo-item.completed input[type="text"]{
-  text-decoration:line-through;
-  opacity:.85;
-}
+*{box-sizing:border-box}
+:root{--text:#668cbb;--hover:rgba(118,153,197,.1)}
+html,body{margin:0;padding:0;background:transparent;overflow:hidden}
+body{padding:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.todo-item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px}
+.todo-item:hover{background:var(--hover)}
+.todo-item input[type=checkbox]{width:18px;height:18px}
+.todo-item input[type=text]{flex:1;border:none;outline:none;background:transparent;color:var(--text);font-size:16px}
+.completed input[type=text]{text-decoration:line-through;opacity:.85}
 </style>
-
 </head>
-
 <body>
-
-<div class="todo-app">
-  <div id="todoList"></div>
-</div>
-
+<div id="todoList"></div>
 <script>
-const STORAGE_KEY = "notionTodoList";
-const RESET_KEY = "notionTodoLastReset";
-
-let todos =
-JSON.parse(
-  localStorage.getItem(STORAGE_KEY)
-) || [
-  {
-    text:"",
-    checked:false
-  }
-];
-
-function saveTodos(){
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(todos)
-  );
+const STORAGE_KEY="notionTodoList";
+const RESET_KEY="notionTodoLastReset";
+let todos=JSON.parse(localStorage.getItem(STORAGE_KEY))||[{text:"",checked:false}];
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(todos))}
+function resetDate(){
+ const n=new Date(),d=new Date(n);
+ if(n.getHours()<5)d.setDate(d.getDate()-1);
+ return d.toISOString().split("T")[0];
 }
-
-function getResetDate(){
-
-  const now = new Date();
-  const resetDate = new Date(now);
-
-  if(now.getHours() < 5){
-    resetDate.setDate(
-      resetDate.getDate() - 1
-    );
-  }
-
-  return resetDate
-    .toISOString()
-    .split("T")[0];
+function resetIfNeeded(){
+ const cur=resetDate(),last=localStorage.getItem(RESET_KEY);
+ if(cur!==last){
+   todos.forEach(t=>t.checked=false);
+   localStorage.setItem(RESET_KEY,cur);
+   save();
+ }
 }
-
-function resetCheckboxesIfNeeded(){
-
-  const current = getResetDate();
-
-  const last =
-  localStorage.getItem(
-    RESET_KEY
-  );
-
-  if(current !== last){
-
-    todos.forEach(todo=>{
-      todo.checked = false;
-    });
-
-    localStorage.setItem(
-      RESET_KEY,
-      current
-    );
-
-    saveTodos();
-  }
+function render(focusOriginal=null){
+ const list=document.getElementById("todoList");
+ list.innerHTML="";
+ const display=todos.map((todo,i)=>({todo,i}))
+ .sort((a,b)=>Number(a.todo.checked)-Number(b.todo.checked));
+ display.forEach(({todo,i})=>{
+   const row=document.createElement("div");
+   row.className="todo-item"+(todo.checked?" completed":"");
+   const cb=document.createElement("input");
+   cb.type="checkbox";cb.checked=todo.checked;
+   cb.onchange=()=>{todo.checked=cb.checked;save();render()};
+   const txt=document.createElement("input");
+   txt.type="text";txt.value=todo.text;txt.placeholder="タスクを入力";
+   txt.oninput=()=>{todo.text=txt.value;save();}
+   txt.onkeydown=e=>{
+     if(e.key==="Enter"){
+       e.preventDefault();
+       todos.splice(i+1,0,{text:"",checked:false});
+       save();render(i+1);
+     }
+     if(e.key==="Backspace"&&txt.value.trim()===""&&todos.length>1){
+       e.preventDefault();
+       const f=Math.max(i-1,0);
+       todos.splice(i,1);
+       save();render(f);
+     }
+   };
+   row.append(cb,txt);
+   list.appendChild(row);
+ });
+ if(focusOriginal!==null){
+   requestAnimationFrame(()=>{
+     const display2=todos.map((todo,i)=>({todo,i}))
+      .sort((a,b)=>Number(a.todo.checked)-Number(b.todo.checked));
+     const pos=display2.findIndex(x=>x.i===focusOriginal);
+     document.querySelectorAll('input[type=text]')[pos]?.focus();
+   });
+ }
 }
-
-function sortTodos(){
-
-  todos.sort((a,b)=>{
-    return Number(a.checked)
-      - Number(b.checked);
-  });
-
-}
-
-function render(
-  focusIndex = null
-){
-
-  const list =
-  document.getElementById(
-    "todoList"
-  );
-
-  list.innerHTML = "";
-
-  todos.forEach(
-    (todo,index)=>{
-
-      const item =
-      document.createElement(
-        "div"
-      );
-
-      item.className =
-      "todo-item" +
-      (
-        todo.checked
-        ? " completed"
-        : ""
-      );
-
-      const checkbox =
-      document.createElement(
-        "input"
-      );
-
-      checkbox.type =
-      "checkbox";
-
-      checkbox.checked =
-      todo.checked;
-
-      checkbox.addEventListener(
-        "change",
-        ()=>{
-
-          todo.checked =
-          checkbox.checked;
-
-          sortTodos();
-          saveTodos();
-          render();
-
-        }
-      );
-
-      const text =
-      document.createElement(
-        "input"
-      );
-
-      text.type = "text";
-
-      text.value =
-      todo.text;
-
-      text.placeholder =
-      "タスクを入力";
-
-      text.addEventListener(
-        "input",
-        ()=>{
-
-          todo.text =
-          text.value;
-
-          saveTodos();
-
-        }
-      );
-
-      text.addEventListener(
-        "keydown",
-        (e)=>{
-
-          if(
-            e.key === "Enter"
-          ){
-
-            e.preventDefault();
-
-            todos.splice(
-              index + 1,
-              0,
-              {
-                text:"",
-                checked:false
-              }
-            );
-
-            saveTodos();
-
-            render(
-              index + 1
-            );
-          }
-
-          if(
-            e.key === "Backspace" &&
-            text.value.trim() === "" &&
-            todos.length > 1
-          ){
-
-            e.preventDefault();
-
-            const focus =
-            Math.max(
-              index - 1,
-              0
-            );
-
-            todos.splice(
-              index,
-              1
-            );
-
-            saveTodos();
-
-            render(
-              focus
-            );
-          }
-
-        }
-      );
-
-      item.appendChild(
-        checkbox
-      );
-
-      item.appendChild(
-        text
-      );
-
-      list.appendChild(
-        item
-      );
-
-    }
-  );
-
-  if(
-    focusIndex !== null
-  ){
-
-    setTimeout(()=>{
-
-      const inputs =
-      document.querySelectorAll(
-        '.todo-item input[type="text"]'
-      );
-
-      inputs[
-        focusIndex
-      ]?.focus();
-
-    },0);
-
-  }
-}
-
-resetCheckboxesIfNeeded();
+resetIfNeeded();
 render();
 </script>
-
-</body>
-</html>
+</body></html>
